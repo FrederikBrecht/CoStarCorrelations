@@ -23,7 +23,7 @@ The IMDb non-commercial database separates the data into multiple different file
   ...
   ```
 
--**title.basics.tsv**. This file contains name of a title, as well as original title, release date, runtime and genres and a unique identifier (and once again a few other parameters we will ignore). This file spans across short form films, tv episodes and series as well, but we will filter this by the titletype parameter to only include movies. Once again the unique id is important since it is persistent throughout the database. This would be an excerpt of the file:
+- **title.basics.tsv**. This file contains name of a title, as well as original title, release date, runtime and genres and a unique identifier (and once again a few other parameters we will ignore). This file spans across short form films, tv episodes and series as well, but we will filter this by the titletype parameter to only include movies. Once again the unique id is important since it is persistent throughout the database. This would be an excerpt of the file:
 
   ```
   tconst  titleType  primaryTitle  originalTitle  isAdult  startYear  endYear  runtimeMinutes  genres 
@@ -34,7 +34,7 @@ The IMDb non-commercial database separates the data into multiple different file
   ... 
   ```
 
--**title.ratings.tsv**. This file stores all the ratings of content, according to their unique id (which corresponds to the ids in the title.basics.tsv file. Structure:
+- **title.ratings.tsv**. This file stores all the ratings of content, according to their unique id (which corresponds to the ids in the title.basics.tsv file. Structure:
 
   ```
   tconst  averageRating  numVotes 
@@ -45,7 +45,7 @@ The IMDb non-commercial database separates the data into multiple different file
   ... 
   ```
 
--**title.principals.tsv**. This file contains the movie ids and correlates each to the people who worked on the movie (actors, directors, etc.). Utilizing this, we can create edges between actors and movies. Structure:
+- **title.principals.tsv**. This file contains the movie ids and correlates each to the people who worked on the movie (actors, directors, etc.). Utilizing this, we can create edges between actors and movies. Structure:
 
   ```
   tconst  ordering  nconst  category  job  characters
