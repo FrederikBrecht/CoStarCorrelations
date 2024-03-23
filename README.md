@@ -45,7 +45,7 @@ The IMDb non-commercial database separates the data into multiple different file
   ... 
   ```
 
--**title.principals.tsv**. This file contains the movie ids and correlates each to the people who worked on the movie (actors, directors, etc.). Utilizing this, we can create edges between actors and movies. Structure:
+- **title.principals.tsv**. This file contains the movie ids and correlates each to the people who worked on the movie (actors, directors, etc.). Utilizing this, we can create edges between actors and movies. Structure:
 
   ```
   tconst  ordering  nconst  category  job  characters
