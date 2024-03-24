@@ -7,6 +7,7 @@ principals_filtered.tsv and ratings_filtered.tsv.
 """
 import csv
 import operator
+import os
 
 
 def filter_by_movie(read_file: str, write_file: str) -> str:
@@ -167,6 +168,8 @@ def filter_movies_only(movies_file: str, ratings_file: str, principals_file: str
     """
     Creates filtered versions of all files, containing only movies.
     """
+    if not os.path.exists('/movies_only'):
+        os.mkdir('movies_only')
     filter_by_movie(movies_file, 'movies_only/titles_filtered.tsv')
     filter_ratings(ratings_file, 'movies_only/titles_filtered.tsv', 'movies_only/ratings_filtered.tsv')
     filter_principals(principals_file, 'movies_only/titles_filtered.tsv', 'movies_only/principals_filtered.tsv')
@@ -177,6 +180,8 @@ def filter_10k_rated(movies_file: str, ratings_file: str, principals_file: str, 
     """
     Creates filtered versions of all files, containing only the top 10 000 highest rated movies.
     """
+    if not os.path.exists('/sample_db'):
+        os.mkdir('sample_db')
     movies_set = filter_ratings_10k(ratings_file, movies_file, 'sample_db/ratings_10k.tsv')
     filter_movies_by_set(movies_set, movies_file, 'sample_db/titles_10k.tsv')
     filter_principals(principals_file, 'sample_db/titles_10k.tsv', 'sample_db/principals_10k.tsv')
@@ -190,7 +195,7 @@ if __name__ == "__main__":
         "forbidden-io-functions": ["print"],
         'max-line-length': 120,
         'disable': ['E1136', 'W0221'],
-        'extra-imports': ['csv', 'operator'],
+        'extra-imports': ['csv', 'operator', 'os'],
         'max-nested-blocks': 4
     })
     filter_movies_only('full_db/titles.tsv', 'full_db/ratings.tsv',
