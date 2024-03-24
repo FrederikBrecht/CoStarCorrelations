@@ -4,6 +4,7 @@ Movie and Actor classes as well as a Graph datastructure (with Vertices).
 from typing import Any
 import csv
 
+
 class Actor:
     """An actor is a data type that stores the various information about an actor/actress
     such as id, name, rating, birth year and death year. Death year will be represented as
@@ -245,7 +246,7 @@ class Graph:
         """
         # TODO
 
-    def load_actors(self, names_file: str) -> None:
+    def _load_actors(self, names_file: str) -> None:
         """
         Helper function which takes the file name of a names.tsv file and creates all actor vertices within the given
         graph
@@ -263,7 +264,7 @@ class Graph:
 
                 self.add_vertex(Actor(line[0], line[1], birth_year, death_year))
 
-    def load_movies(self, titles_file: str, ratings_file: str) -> None:
+    def _load_movies(self, titles_file: str, ratings_file: str) -> None:
         """
         Helper function which takes the file name of a title.basics.tsv file and a title.ratings.tsv file and creates all
         movie vertices within the given graph.
@@ -284,7 +285,7 @@ class Graph:
                     movies[line[0]].rating = float(line[1])
                     self.add_vertex(movies[line[0]])
 
-    def load_principals(self, principal_file: str) -> None:
+    def _load_principals(self, principal_file: str) -> None:
         """
         Helper function which takes the file name of a principal tsv file and creates the edges in the graph
         corresponding to the principals.
@@ -300,6 +301,6 @@ class Graph:
         Loads actors, movies with corresponding ratings as well as the edges between actors and movies into the graph,
         based on the files which are given.
         """
-        self.load_actors(actors)
-        self.load_movies(titles, ratings)
-        self.load_principals(principals)
+        self._load_actors(actors)
+        self._load_movies(titles, ratings)
+        self._load_principals(principals)
