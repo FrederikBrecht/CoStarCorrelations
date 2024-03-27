@@ -1,6 +1,7 @@
 """
 Movie and Actor classes as well as a Graph datastructure (with Vertices).
 """
+from __future__ import annotations
 from typing import Any
 import csv
 
@@ -209,7 +210,15 @@ class Graph:
         """
         initiate all the actors' rating by taking the average of the ratings of the movies they are adjacent to.
         """
-        # TODO
+
+        vertices = self.get_all_vertices()
+
+        for vertex in vertices:
+            if type(vertex.item) == Actor:
+                sum_score = 0
+                for neighbour in vertex.neighbours:
+                    sum_score += neighbour.item.rating
+                vertex.item.rating = sum_score / len(vertex.neighbours)
 
     def evaluate_collaborative_performance(self, actors: list[str]) -> float:
         """
@@ -218,8 +227,23 @@ class Graph:
         This method returns the average score of the movies that all members of the list particpated in.
 
         If there is no movie that all members of the list participated in, return -1
+
+        Preconditions:
+            - actors != []
         """
-        # TODO
+
+        all_movies = [self._vertices[actor].neighbours for actor in actors]
+        shared_movies = all_movies[0]
+        for i in range(1, len(all_movies)):
+            shared_movies = shared_movies & all_movies[i]
+
+        if len(shared_movies) == 0:
+            return -1
+        else:
+            score_sum = 0
+            for movie in shared_movies:
+                score_sum += movie.item.rating
+            return score_sum / len(shared_movies)
 
     def find_best_movie_together(self, actors: list[str]) -> str:
         """
@@ -229,7 +253,22 @@ class Graph:
 
         If there is no movie that all members of the list participated in, return /N
         """
-        # TODO
+        all_movies = [self._vertices[actor].neighbours for actor in actors]
+        shared_movies = all_movies[0]
+        for i in range(1, len(all_movies)):
+            shared_movies = shared_movies & all_movies[i]
+
+        if len(shared_movies) == 0:
+            return '/N'
+        else:
+            max_score = -1
+            max_id = '/N'
+            for movie in shared_movies:
+                if movie.item.rating > max_score:
+                    max_score = movie.item.rating
+                    max_id = movie.item.db_id
+
+            return max_id
 
     def find_casting_team(self, actor: str, number_of_actors: int, min_num_collab) -> list[str]:
         """
@@ -244,7 +283,20 @@ class Graph:
         min num collab refers to the minimum amount of movies two actors has to collaborated in for that actor to be
         considered
         """
-        # TODO
+        acted_together = [u for v in self._vertices[actor].neighbours for u in v.neighbours
+                          if len(u.neighbours.intersection(self._vertices[actor].neighbours)) >= min_num_collab]
+
+        score_together = [self.evaluate_collaborative_performance([actor, u.item.db_id]) for u in acted_together]
+
+        for i in range(len(acted_together)):
+            for z in range(i, 0, -1):
+                if score_together[z] < score_together[z - 1]:
+                    score_together[z], score_together[z - 1] = score_together[z - 1], score_together[z]
+                    acted_together[z], acted_together[z - 1] = acted_together[z - 1], acted_together[z]
+                else:
+                    break
+
+        return acted_together[:number_of_actors]
 
     def _load_actors(self, names_file: str) -> None:
         """
