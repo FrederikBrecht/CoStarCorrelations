@@ -146,6 +146,43 @@ def filter_ratings_10k(read_ratings_file: str, read_movies_file: str,
     return top_movies_set
 
 
+def filter_ratings_by_amount(read_ratings_file: str, read_movies_file: str,
+                             write_ratings_file: str, amount: int) -> set[str]:
+    """
+    Given a movies tsv file, and a ratings file, create two filtered files which only contains the top
+    <amount> movies by rating. Return the set of top <amount> movies.
+    """
+    top_movies = []
+    top_movies_set = set()
+    with (open(read_movies_file, 'r', encoding="utf8") as movies,
+          open(read_ratings_file, 'r', encoding="utf8") as ratings,
+          open(write_ratings_file, 'wt', encoding="utf8", newline='') as write_ratings):
+        movie_reader = csv.reader(movies, delimiter='\t')
+        ratings_reader = csv.reader(ratings, delimiter='\t')
+        ratings_writer = csv.writer(write_ratings, delimiter='\t')
+        next(ratings_reader)
+
+        for line in movie_reader:
+            if line[1] == "movie":
+                top_movies_set.add(line[0])
+
+        for line in ratings_reader:
+            if line[0] in top_movies_set:
+                top_movies.append([line[0], line[1]])
+
+        top_movies.sort(key=operator.itemgetter(1), reverse=True)
+        top_movies = top_movies[:amount]
+        top_movies_set = {title[0] for title in top_movies}
+
+        for movie in top_movies:
+            ratings_writer.writerow(movie)
+
+        movies.close()
+        ratings.close()
+        write_ratings.close()
+    return top_movies_set
+
+
 def filter_movies_by_set(movies_set: set[str], read_movies_file: str, write_movies_file: str) -> None:
     """
     Given a titles tsv file and a set of movie ids, create a file at specificied location with only the movies
@@ -168,7 +205,7 @@ def filter_movies_only(movies_file: str, ratings_file: str, principals_file: str
     """
     Creates filtered versions of all files, containing only movies.
     """
-    if not os.path.exists('/movies_only'):
+    if not os.path.exists('movies_only'):
         os.mkdir('movies_only')
     filter_by_movie(movies_file, 'movies_only/titles_filtered.tsv')
     filter_ratings(ratings_file, 'movies_only/titles_filtered.tsv', 'movies_only/ratings_filtered.tsv')
@@ -180,7 +217,7 @@ def filter_10k_rated(movies_file: str, ratings_file: str, principals_file: str, 
     """
     Creates filtered versions of all files, containing only the top 10 000 highest rated movies.
     """
-    if not os.path.exists('/sample_db'):
+    if not os.path.exists('sample_db'):
         os.mkdir('sample_db')
     movies_set = filter_ratings_10k(ratings_file, movies_file, 'sample_db/ratings_10k.tsv')
     filter_movies_by_set(movies_set, movies_file, 'sample_db/titles_10k.tsv')
@@ -188,17 +225,32 @@ def filter_10k_rated(movies_file: str, ratings_file: str, principals_file: str, 
     filter_actors(actors_file, 'sample_db/principals_10k.tsv', 'sample_db/actors_10k.tsv')
 
 
-if __name__ == "__main__":
-    import python_ta
+def filter_by_num(movies_file: str, ratings_file: str, principals_file: str, actors_file: str, amount: int) -> None:
+    """
+    Creates filtered versions of all files, containing only the top <amount> rated movies.
+    """
+    if not os.path.exists(f'db_{amount}_movies'):
+        os.mkdir(f'db_{amount}_movies')
 
-    python_ta.check_all(config={
-        "forbidden-io-functions": ["print"],
-        'max-line-length': 120,
-        'disable': ['E1136', 'W0221'],
-        'extra-imports': ['csv', 'operator', 'os'],
-        'max-nested-blocks': 4
-    })
-    filter_movies_only('full_db/titles.tsv', 'full_db/ratings.tsv',
-                       'full_db/principals.tsv', 'full_db/names.tsv')
-    filter_10k_rated('full_db/titles.tsv', 'full_db/ratings.tsv',
-                     'full_db/principals.tsv', 'full_db/names.tsv')
+    movies_set = filter_ratings_by_amount(ratings_file, movies_file, f'db_{amount}_movies/ratings.tsv', amount)
+    filter_movies_by_set(movies_set, movies_file, f'db_{amount}_movies/titles.tsv')
+    filter_principals(principals_file, f'db_{amount}_movies/titles.tsv', f'db_{amount}_movies/principals.tsv')
+    filter_actors(actors_file, f'db_{amount}_movies/principals.tsv', f'db_{amount}_movies/actors.tsv')
+
+
+# if __name__ == "__main__":
+    # import python_ta
+    #
+    # python_ta.check_all(config={
+    #     "forbidden-io-functions": ["print"],
+    #     'max-line-length': 120,
+    #     'disable': ['E1136', 'W0221'],
+    #     'extra-imports': ['csv', 'operator', 'os'],
+    #     'max-nested-blocks': 4
+    # })
+    # filter_movies_only('full_db/titles.tsv', 'full_db/ratings.tsv',
+    #                    'full_db/principals.tsv', 'full_db/names.tsv')
+    # filter_10k_rated('full_db/titles.tsv', 'full_db/ratings.tsv',
+    #                  'full_db/principals.tsv', 'full_db/names.tsv')
+    # filter_by_num('full_db/titles.tsv', 'full_db/ratings.tsv',
+    #               'full_db/principals.tsv', 'full_db/names.tsv', 100)
