@@ -129,10 +129,12 @@ class Graph:
     #         A collection of the vertices contained in this graph.
     #         Maps item to _Vertex object.
     _vertices: dict[Any, _Vertex]
+    _names_to_ids: dict[str, str]
 
     def __init__(self) -> None:
         """Initialize an empty graph (no vertices or edges)."""
         self._vertices = {}
+        self._names_to_ids = {}
 
     def __contains__(self, item: Any) -> bool:
         return item in self._vertices
@@ -205,6 +207,20 @@ class Graph:
             return {v.item for v in self._vertices.values() if type(v) == kind}
         else:
             return set(self._vertices.keys())
+
+    def get_id(self, name: str) -> str:
+        """
+        Return the database ID corresponding to the name of the movie/ actor. Raise a ValueError if the name isn't in
+        the database. Pass in type 'a' or type 'm' depending on whether or not you're looking for a movie or actor
+        ID.
+
+        Preconditions:
+            - type in {'a', 'm'}
+        """
+        if name not in self._names_to_ids:
+            raise ValueError
+        else:
+            return self._names_to_ids[name]
 
     def evaluate_all_actor_ratings(self) -> None:
         """
@@ -315,6 +331,7 @@ class Graph:
                     birth_year = int(line[2])
 
                 self.add_vertex(Actor(line[0], line[1], birth_year, death_year))
+                self._names_to_ids[line[1]] = line[0]
 
     def _load_movies(self, titles_file: str, ratings_file: str) -> None:
         """
@@ -332,6 +349,7 @@ class Graph:
                 if line[2] != '\\N':
                     release = int(line[2])
                 movies[line[0]] = Movie(line[0], line[1], release, line[3], line[4])
+                self._names_to_ids[line[1]] = line[0]
             for line in ratings_reader:
                 if line[0] in movies:
                     movies[line[0]].rating = float(line[1])
