@@ -73,7 +73,7 @@ def filter_principals(read_principals_file: str, read_movies_file: str, write_pr
             movies_set.add(line[0])
 
         for line in principals_reader:
-            if line[0] in movies_set and line[3] == 'actor':
+            if line[0] in movies_set and (line[3] == 'actor' or line[3] == 'actress'):
                 principals_writer.writerow([line[0], line[2]])
 
         principals.close()
