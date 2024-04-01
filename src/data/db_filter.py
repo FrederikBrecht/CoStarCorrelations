@@ -13,14 +13,15 @@ import os
 def filter_by_movie(read_file: str, write_file: str) -> str:
     """
     Takes a full imdb titles tsv file and returns a file which only contains movies (removes shorts, series, etc.)
-    Also removes all movie attributes that aren't relevant to us. Returns the new files name.
+    Also removes all movie attributes that aren't relevant to us. Returns the new files name. Also filter out all
+    adult movies, to keep this project family friendly.
     """
     with open(read_file, 'r', encoding="utf8") as titles, open(write_file, 'wt', encoding="utf8", newline='') as movies:
         title_reader = csv.reader(titles, delimiter="\t")
         movie_writer = csv.writer(movies, delimiter="\t")
 
         for line in title_reader:
-            if line[1] == "movie":
+            if line[1] == "movie" and int(line[4]) == 0:
                 movie_writer.writerow([line[0], line[2], line[5], line[7], line[8]])
 
         titles.close()
@@ -72,7 +73,7 @@ def filter_principals(read_principals_file: str, read_movies_file: str, write_pr
             movies_set.add(line[0])
 
         for line in principals_reader:
-            if line[0] in movies_set:
+            if line[0] in movies_set and line[3] == 'actor':
                 principals_writer.writerow([line[0], line[2]])
 
         principals.close()
@@ -113,7 +114,8 @@ def filter_ratings_10k(read_ratings_file: str, read_movies_file: str,
                        write_ratings_file: str) -> set[str]:
     """
     Given a movies tsv file, and a ratings file, create two filtered files which only contains the top
-    10 000 movies by rating. Return the set of top 10k movies.
+    10 000 movies by rating. Return the set of top 10k movies. Also filter out all
+    adult movies, to keep this project family friendly.
     """
     top_movies = []
     top_movies_set = set()
@@ -126,11 +128,11 @@ def filter_ratings_10k(read_ratings_file: str, read_movies_file: str,
         next(ratings_reader)
 
         for line in movie_reader:
-            if line[1] == "movie":
+            if line[1] == "movie" and int(line[4]) == 0:
                 top_movies_set.add(line[0])
 
         for line in ratings_reader:
-            if line[0] in top_movies_set:
+            if line[0] in top_movies_set and int(line[2]) > 100:
                 top_movies.append([line[0], line[1]])
 
         top_movies.sort(key=operator.itemgetter(1), reverse=True)
@@ -150,7 +152,8 @@ def filter_ratings_by_amount(read_ratings_file: str, read_movies_file: str,
                              write_ratings_file: str, amount: int) -> set[str]:
     """
     Given a movies tsv file, and a ratings file, create two filtered files which only contains the top
-    <amount> movies by rating. Return the set of top <amount> movies.
+    <amount> movies by rating. Return the set of top <amount> movies. Also filter out all
+    adult movies, to keep this project family friendly.
     """
     top_movies = []
     top_movies_set = set()
@@ -163,11 +166,11 @@ def filter_ratings_by_amount(read_ratings_file: str, read_movies_file: str,
         next(ratings_reader)
 
         for line in movie_reader:
-            if line[1] == "movie":
+            if line[1] == "movie" and int(line[4]) == 0:
                 top_movies_set.add(line[0])
 
         for line in ratings_reader:
-            if line[0] in top_movies_set:
+            if line[0] in top_movies_set and int(line[2]) > 100:
                 top_movies.append([line[0], line[1]])
 
         top_movies.sort(key=operator.itemgetter(1), reverse=True)
@@ -238,7 +241,7 @@ def filter_by_num(movies_file: str, ratings_file: str, principals_file: str, act
     filter_actors(actors_file, f'db_{amount}_movies/principals.tsv', f'db_{amount}_movies/actors.tsv')
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
     # import python_ta
     #
     # python_ta.check_all(config={
@@ -248,9 +251,9 @@ def filter_by_num(movies_file: str, ratings_file: str, principals_file: str, act
     #     'extra-imports': ['csv', 'operator', 'os'],
     #     'max-nested-blocks': 4
     # })
-    # filter_movies_only('full_db/titles.tsv', 'full_db/ratings.tsv',
-    #                    'full_db/principals.tsv', 'full_db/names.tsv')
-    # filter_10k_rated('full_db/titles.tsv', 'full_db/ratings.tsv',
-    #                  'full_db/principals.tsv', 'full_db/names.tsv')
-    # filter_by_num('full_db/titles.tsv', 'full_db/ratings.tsv',
-    #               'full_db/principals.tsv', 'full_db/names.tsv', 100)
+    filter_movies_only('full_db/titles.tsv', 'full_db/ratings.tsv',
+                       'full_db/principals.tsv', 'full_db/names.tsv')
+    filter_10k_rated('full_db/titles.tsv', 'full_db/ratings.tsv',
+                     'full_db/principals.tsv', 'full_db/names.tsv')
+    filter_by_num('full_db/titles.tsv', 'full_db/ratings.tsv',
+                  'full_db/principals.tsv', 'full_db/names.tsv', 100)

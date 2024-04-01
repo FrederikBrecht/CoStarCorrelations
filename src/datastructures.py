@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import Any
 import csv
 import networkx as nx
-from plotly.graph_objs import Scatter, Figure
-
 
 
 class Actor:
@@ -316,9 +314,9 @@ class Graph:
         min num collab refers to the minimum amount of movies two actors has to collaborated in for that actor to be
         considered
         """
-        acted_together = [self.get_name(u.item.db_id) for v in self._vertices[actor].neighbours for u in v.neighbours
-                          if len(u.neighbours.intersection(self._vertices[actor].neighbours)) >= min_num_collab and
-                          u.item.db_id != actor]
+        acted_together = acted_together = list({self.get_name(u.item.db_id) for v in self._vertices[actor].neighbours
+        for u in v.neighbours if len(u.neighbours.intersection(self._vertices[actor].neighbours)) >= min_num_collab and
+                          u.item.db_id != actor})
 
         score_together = [self.evaluate_collaborative_performance([actor, self.get_id(u)]) for u in acted_together]
 

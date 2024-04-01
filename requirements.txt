@@ -1,0 +1,7 @@
+# Necessary Libraries to run our code
+
+# visualization
+networkx
+PySimpleGUI
+plotly
+

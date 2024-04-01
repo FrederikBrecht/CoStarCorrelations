@@ -6,9 +6,7 @@ This python file will handle all the functions for an interactive interface.
 import PySimpleGUI as sg
 import networkx as nx
 from plotly.graph_objs import Scatter, Figure
-
 import datastructures
-from data import db_filter
 
 
 # FINAL VARIABLES
@@ -30,9 +28,14 @@ SMALLER_FONT = ("Arial", 14)
 SMALL_FONT = ("Arial", 10)
 
 ACTOR_MOVIE_GRAPH = datastructures.Graph()
-ACTOR_MOVIE_GRAPH.load_movie_graph("data/actors_10k.tsv", "data/titles_10k.tsv",
-                                   "data/ratings_10k.tsv", "data/principals_10k.tsv")
+ACTOR_MOVIE_GRAPH.load_movie_graph("data/sample_db/actors_10k.tsv", "data/sample_db/titles_10k.tsv",
+                                   "data/sample_db/ratings_10k.tsv", "data/sample_db/principals_10k.tsv")
 ACTOR_MOVIE_GRAPH.evaluate_all_actor_ratings()
+
+LINE_COLOUR = 'rgb(210,210,210)'
+VERTEX_BORDER_COLOUR = 'rgb(50, 50, 50)'
+ACTOR_COLOUR = 'rgb(89, 205, 105)'
+MOVIE_COLOUR = 'rgb(105, 89, 205)'
 
 
 # FUNCTIONS====================================
@@ -178,17 +181,12 @@ def visualize_graph(graph: datastructures.Graph, layout: str = 'spring_layout', 
         - output_file: a filename to save the plotly image to (rather than displaying
             in your web browser)
     """
-    COLOUR_SCHEME = [
-        '#2E91E5', '#E15F99', '#1CA71C', '#FB0D0D', '#DA16FF', '#222A2A', '#B68100',
-        '#750D86', '#EB663B', '#511CFB', '#00A08B', '#FB00D1', '#FC0080', '#B2828D',
-        '#6C7C32', '#778AAE', '#862A16', '#A777F1', '#620042', '#1616A7', '#DA60CA',
-        '#6C4516', '#0D2A63', '#AF0038'
-    ]
-
-    LINE_COLOUR = 'rgb(210,210,210)'
-    VERTEX_BORDER_COLOUR = 'rgb(50, 50, 50)'
-    ACTOR_COLOUR = 'rgb(89, 205, 105)'
-    MOVIE_COLOUR = 'rgb(105, 89, 205)'
+    # COLOUR_SCHEME = [
+    #     '#2E91E5', '#E15F99', '#1CA71C', '#FB0D0D', '#DA16FF', '#222A2A', '#B68100',
+    #     '#750D86', '#EB663B', '#511CFB', '#00A08B', '#FB00D1', '#FC0080', '#B2828D',
+    #     '#6C7C32', '#778AAE', '#862A16', '#A777F1', '#620042', '#1616A7', '#DA60CA',
+    #     '#6C4516', '#0D2A63', '#AF0038'
+    # ]
 
     graph_nx = graph.to_networkx(max_vertices)
 
@@ -197,9 +195,10 @@ def visualize_graph(graph: datastructures.Graph, layout: str = 'spring_layout', 
     x_values = [pos[k][0] for k in graph_nx.nodes]
     y_values = [pos[k][1] for k in graph_nx.nodes]
     labels = list(graph_nx.nodes)
-    names = [lab.name for lab in labels if type(lab) == datastructures.Actor or type(lab) == datastructures.Movie]
+    names = [lab.name for lab in labels if isinstance(lab, datastructures.Actor)
+             or isinstance(lab, datastructures.Movie)]
 
-    colours = [MOVIE_COLOUR if type(lab) == datastructures.Actor else ACTOR_COLOUR for lab in labels]
+    colours = [MOVIE_COLOUR if isinstance(lab, datastructures.Actor) else ACTOR_COLOUR for lab in labels]
 
     x_edges = []
     y_edges = []
@@ -211,18 +210,15 @@ def visualize_graph(graph: datastructures.Graph, layout: str = 'spring_layout', 
                      y=y_edges,
                      mode='lines',
                      name='edges',
-                     line=dict(color=LINE_COLOUR, width=1),
+                     line={"color": LINE_COLOUR, "width": 1},
                      hoverinfo='none',
                      )
     trace4 = Scatter(x=x_values,
                      y=y_values,
                      mode='markers',
                      name='nodes',
-                     marker=dict(symbol='circle-dot',
-                                 size=5,
-                                 color=colours,
-                                 line=dict(color=VERTEX_BORDER_COLOUR, width=0.5)
-                                 ),
+                     marker={"symbol": 'circle-dot', "size": 5, "color": colours,
+                             "line": {"color": VERTEX_BORDER_COLOUR, "width": 0.5}},
                      text=names,
                      hovertemplate='%{text}',
                      hoverlabel={'namelength': 0}
@@ -290,63 +286,64 @@ CASTMATES = sg.Window("Finding Castmates!", CASTMATES_LAYOUT, margins=MARGINS)
 
 
 # Event Loop to process "events" and get the "values" of the inputs
-while True:
-    event, values = WINDOW.read()
-    # print(event, values)
+def run_interface() -> None:
+    """
+    Run the entire interface.
+    """
+    while True:
+        event, values = WINDOW.read()
+        # print(event, values)
 
-    if event == sg.WIN_CLOSED or event == "-CANCEL-":  # if user closes window or clicks cancel
-        break
+        if event == sg.WIN_CLOSED or event == "-CANCEL-":  # if user closes window or clicks cancel
+            break
 
-    # Runs the given method
-    if values[event] == "The average performance of a group of actors":
-        if COLLAB.is_hidden():
-            COLLAB.un_hide()
-        WINDOW.hide()
+        # Runs the given method
+        if values[event] == "The average performance of a group of actors":
+            if COLLAB.is_hidden():
+                COLLAB.un_hide()
+            WINDOW.hide()
 
-        run_collabs()
-        WINDOW.un_hide()
+            run_collabs()
+            WINDOW.un_hide()
 
-    if values[event] == "The best performing movie of a group of actors":
-        if BEST.is_hidden():
-            BEST.un_hide()
-        WINDOW.hide()
+        if values[event] == "The best performing movie of a group of actors":
+            if BEST.is_hidden():
+                BEST.un_hide()
+            WINDOW.hide()
 
-        run_best_movie()
-        WINDOW.un_hide()
+            run_best_movie()
+            WINDOW.un_hide()
 
-    if values[event] == "The castmates of a particular actor":
-        if CASTMATES.is_hidden():
-            CASTMATES.un_hide()
-        WINDOW.hide()
+        if values[event] == "The castmates of a particular actor":
+            if CASTMATES.is_hidden():
+                CASTMATES.un_hide()
+            WINDOW.hide()
 
-        run_find_castmates()
-        WINDOW.un_hide()
+            run_find_castmates()
+            WINDOW.un_hide()
 
-    if values[event] == "See a graph of all the movies and actors! (May take a while)":
-        visualize_graph(ACTOR_MOVIE_GRAPH)
+        if values[event] == "See a graph of all the movies and actors! (May take a while)":
+            visualize_graph(ACTOR_MOVIE_GRAPH)
+
+    WINDOW.close()
 
 
-WINDOW.close()
+if __name__ == '__main__':
+    # You can uncomment the following lines for code checking/debugging purposes.
+    # However, we recommend commenting out these lines when working with the large
+    # datasets, as checking representation invariants and preconditions greatly
+    # increases the running time of the functions/methods.
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
 
+    import doctest
 
-# if __name__ == '__main__':
-#     # You can uncomment the following lines for code checking/debugging purposes.
-#     # However, we recommend commenting out these lines when working with the large
-#     # datasets, as checking representation invariants and preconditions greatly
-#     # increases the running time of the functions/methods.
-#     # import python_ta.contracts
-#     # python_ta.contracts.check_all_contracts()
-#
-#     import doctest
-#
-#     doctest.testmod()
-#
-#     import python_ta
-#
-#     python_ta.check_all(config={
-#         'max-line-length': 120,
-#         'disable': ['E1136'],
-#         'extra-imports': ['csv', 'networkx'],
-#         'allowed-io': ['load_review_graph'],
-#         'max-nested-blocks': 4
-#     })
+    doctest.testmod()
+
+    import python_ta
+
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['E1136'],
+        'max-nested-blocks': 4
+    })
