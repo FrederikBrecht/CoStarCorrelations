@@ -4,6 +4,9 @@ Movie and Actor classes as well as a Graph datastructure (with Vertices).
 from __future__ import annotations
 from typing import Any
 import csv
+import networkx as nx
+from plotly.graph_objs import Scatter, Figure
+
 
 
 class Actor:
@@ -222,19 +225,33 @@ class Graph:
         else:
             return self._names_to_ids[name]
 
+    def get_name(self, id_code: str) -> str:
+        """
+        Return the name corresponding to the ID of the movie/ actor. Raise a ValueError if the ID isn't in
+        the database.
+
+        """
+        if id_code not in self._vertices:
+            raise ValueError
+        else:
+            return self._vertices[id_code].item.name
+
     def evaluate_all_actor_ratings(self) -> None:
         """
         initiate all the actors' rating by taking the average of the ratings of the movies they are adjacent to.
         """
-
         vertices = self.get_all_vertices()
 
         for vertex in vertices:
-            if type(vertex.item) == Actor:
+            if type(self._vertices[vertex].item) == Actor:
                 sum_score = 0
-                for neighbour in vertex.neighbours:
+                for neighbour in self._vertices[vertex].neighbours:
                     sum_score += neighbour.item.rating
-                vertex.item.rating = sum_score / len(vertex.neighbours)
+
+                if len(self._vertices[vertex].neighbours) != 0:
+                    self._vertices[vertex].item.rating = sum_score / len(self._vertices[vertex].neighbours)
+                else:
+                    self._vertices[vertex].item.rating = 0
 
     def evaluate_collaborative_performance(self, actors: list[str]) -> float:
         """
@@ -294,15 +311,16 @@ class Graph:
         actor is the id of the actor being found casting team for.
 
         number of actors refers to the length of the final returned list. The length will be equal or shorter than
-        this vairable
+        this variable
 
         min num collab refers to the minimum amount of movies two actors has to collaborated in for that actor to be
         considered
         """
-        acted_together = [u for v in self._vertices[actor].neighbours for u in v.neighbours
-                          if len(u.neighbours.intersection(self._vertices[actor].neighbours)) >= min_num_collab]
+        acted_together = [self.get_name(u.item.db_id) for v in self._vertices[actor].neighbours for u in v.neighbours
+                          if len(u.neighbours.intersection(self._vertices[actor].neighbours)) >= min_num_collab and
+                          u.item.db_id != actor]
 
-        score_together = [self.evaluate_collaborative_performance([actor, u.item.db_id]) for u in acted_together]
+        score_together = [self.evaluate_collaborative_performance([actor, self.get_id(u)]) for u in acted_together]
 
         for i in range(len(acted_together)):
             for z in range(i, 0, -1):
@@ -374,3 +392,100 @@ class Graph:
         self._load_actors(actors)
         self._load_movies(titles, ratings)
         self._load_principals(principals)
+
+    # MODIFIED FROM ex3_part2.py
+    def to_networkx(self, max_vertices: int = 20000) -> nx.Graph:
+        """Convert this graph into a networkx Graph.
+
+        max_vertices specifies the maximum number of vertices that can appear in the graph.
+        (This is necessary to limit the visualization output for large graphs.)
+
+        Note that this method is provided for you, and you shouldn't change it.
+        """
+        graph_nx = nx.Graph()
+        for v in self._vertices.values():
+            graph_nx.add_node(v.item, kind=type(v))
+
+            for u in v.neighbours:
+                if graph_nx.number_of_nodes() < max_vertices:
+                    graph_nx.add_node(u.item, kind=type(u))
+
+                if u.item in graph_nx.nodes:
+                    graph_nx.add_edge(v.item, u.item)
+
+            if graph_nx.number_of_nodes() >= max_vertices:
+                break
+
+        return graph_nx
+
+
+    # def visualize_graph(self, layout: str = 'spring_layout', max_vertices: int = 5000,
+    #                     output_file: str = '') -> None:
+    #     """Use plotly and networkx to visualize the given graph.
+    #
+    #     Optional arguments:
+    #         - layout: which graph layout algorithm to use
+    #         - max_vertices: the maximum number of vertices that can appear in the graph
+    #         - output_file: a filename to save the plotly image to (rather than displaying
+    #             in your web browser)
+    #     """
+    #     COLOUR_SCHEME = [
+    #         '#2E91E5', '#E15F99', '#1CA71C', '#FB0D0D', '#DA16FF', '#222A2A', '#B68100',
+    #         '#750D86', '#EB663B', '#511CFB', '#00A08B', '#FB00D1', '#FC0080', '#B2828D',
+    #         '#6C7C32', '#778AAE', '#862A16', '#A777F1', '#620042', '#1616A7', '#DA60CA',
+    #         '#6C4516', '#0D2A63', '#AF0038'
+    #     ]
+    #
+    #     LINE_COLOUR = 'rgb(210,210,210)'
+    #     VERTEX_BORDER_COLOUR = 'rgb(50, 50, 50)'
+    #     ACTOR_COLOUR = 'rgb(89, 205, 105)'
+    #     MOVIE_COLOUR = 'rgb(105, 89, 205)'
+    #
+    #     graph_nx = self.to_networkx(max_vertices)
+    #
+    #     pos = getattr(nx, layout)(graph_nx)
+    #
+    #     x_values = [pos[k][0] for k in graph_nx.nodes]
+    #     y_values = [pos[k][1] for k in graph_nx.nodes]
+    #     labels = list(graph_nx.nodes)
+    #     kinds = [graph_nx.nodes[k]['kind'] for k in graph_nx.nodes]
+    #
+    #     colours = [MOVIE_COLOUR if kind == 'book' else ACTOR_COLOUR for kind in kinds]
+    #
+    #     x_edges = []
+    #     y_edges = []
+    #     for edge in graph_nx.edges:
+    #         x_edges += [pos[edge[0]][0], pos[edge[1]][0], None]
+    #         y_edges += [pos[edge[0]][1], pos[edge[1]][1], None]
+    #
+    #     trace3 = Scatter(x=x_edges,
+    #                      y=y_edges,
+    #                      mode='lines',
+    #                      name='edges',
+    #                      line=dict(color=LINE_COLOUR, width=1),
+    #                      hoverinfo='none',
+    #                      )
+    #     trace4 = Scatter(x=x_values,
+    #                      y=y_values,
+    #                      mode='markers',
+    #                      name='nodes',
+    #                      marker=dict(symbol='circle-dot',
+    #                                  size=5,
+    #                                  color=colours,
+    #                                  line=dict(color=VERTEX_BORDER_COLOUR, width=0.5)
+    #                                  ),
+    #                      text=labels,
+    #                      hovertemplate='%{text}',
+    #                      hoverlabel={'namelength': 0}
+    #                      )
+    #
+    #     data1 = [trace3, trace4]
+    #     fig = Figure(data=data1)
+    #     fig.update_layout({'showlegend': False})
+    #     fig.update_xaxes(showgrid=False, zeroline=False, visible=False)
+    #     fig.update_yaxes(showgrid=False, zeroline=False, visible=False)
+    #
+    #     if output_file == '':
+    #         fig.show()
+    #     else:
+    #         fig.write_image(output_file)
