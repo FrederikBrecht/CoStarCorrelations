@@ -56,15 +56,46 @@ The IMDb non-commercial database separates the data into multiple different file
   ...
   ```
 
-The computations will first of all require evaluating the entire data set, matching movies, ratings and actors/ actresses and creating the appropriate graph. We will also have to calculate actors average scores based on this dataset. Then, we plan to implement a method which takes two or more actors and checks the average score between all movies they have co-starred in. Another method would allow the user to input one specific actor or actress, and return a list of the actors/ actresses this specific performer works best with. This would be our imaginary 'casting function', since it displays which actors work well together or which actors critics and the audience like to see together. Another function will allow the user to input two or more actors/actresses, and return the best movie these actors have made together. We could also expand on this function by implementing a parameter which takes the minimum amount of times these actors have worked together, to filter out any 'flukes' or 'one-hit wonders'. All of these functions will be implemented by traversing the graph and averaging/ accumulating/ finding connections between the actors/actresses and the movies and their corresponding scores. Simple options for the user could also be returning all the movies an actor/ actress has worked on, or returning a list of actors for a movie. 
+# Our Program
+Our first step was turning the four IMDb tsv files into a usable dataset. All of this is done in the ```db_filter.py``` file. First we filter out all tv series, short films, etc. We also filtered out all adult films to ensure this dataset stays family friendly. From there we also filter the ratings file, limit the actors to only contain movie actors, as well as getting rid of any non-actor principals. ```db_filter.py``` creates multiple different datasets from the four source files. One dataset contains all (non-adult film) movies in the IMDb database, as well as the corresponding actors, principals and ratings. Another dataset contains only the top 10 000 movies by rating (although each movie has to surpass a 100 review threshold). This is the dataset included as a sample. Due to size limitations, we haven't included the full IMDb database, and ```db\_filter.py``` won't actually be run when executing ```main.py```, since transforming the source data set takes a few minutes. Another option within ```db_filter.py``` is to create custom sized datasets which take the top n movies by rating. 
 
-In terms of an interface, the user will have the option to choose between the different functions we are going to implement (ideally through a GUI, utilizing networkx, tkinter and plotly), and input actors/ actresses (either one, two or more depending on the function) into a text field. Then after doing the computation, the user will receive a movie/ list of movies/ list of actors, with some additional information on each. 
+Our graph comes into play in the ```datastructures.py``` file. Here we defined classes for Actors and Movies containing the relevant information, as well as our movie_graph structure. First of all, the four filtered data files created in ```db_filter.py``` are read and loaded into a movie graph. Here, each actor is connected to the movies they've played in. Next, we have created a function which gets the average rating of an actor, based on the ratings of the movies they've played in. Here the graph is helpful since we can just fetch all the neighbor vertices to each actor and calculate an average.
 
-We will utilize networkx since it can be used to visualize graphs. Specifically the draw_networkx and draw_networkx_labels methods may be helpful to represent a graph of actors and movies with all their attributes, like dates, runtime (for movies) or birth dates (for actors). We may also use tkinter to create a GUI, which a user can then interact with.
+Our main computational functions to analyze the dataset are ```evaluate_collaborative_performance```, \\
+```find_best_movie_together``` and ```find_casting_team``` in the ```datastructures.py``` file:
+    - ```evaluate_collaborative_performance```: This function takes one or more actors and evaluates the average score of all movies they have collaborated on. Once again the graph structure allows us to quickly find neighbors to both actors and evaluate their scores.
+    - ```find_best_movie_together```: As the name implies, this function takes one or more actors and finds the highest rated movie they have collaborated on. Once again the graph allows us to first find all collaborations and pick out the highest rated movie.
+    - ```find_casting_team```: This function takes an actor, as well as a certain amount of costars, and the minimum number of collaborations this actor has had with the costars. Based on these parameters, the function finds the highest rated collaborative group of cast members. This is meant as a sort of imaginary directors function, which builds a dream cast based on the IMDb scores. The graph allows us to quickly find costars and ratings and evaluate the 'perfect' cast built around one actor.
+
+Our work comes together in the ```interface.py``` file. Here we've implemented a visual interface to use all these functions, using a library called PySimpleGUI [2], as well as plotly[3] and networkx[4] to visualize the graph. The interface consists of a drop down menu which allows the user to choose between the three functions we've explained previously, as well as getting a visualization of the graph. Here the user can create casts around their favorite actors, find the best movie in which multiple actors have collaborated, or find the average rating of multiple actors that have worked together.
+
+# Running The Program
+To run our project, first download the database files from the IMDb website linked in the references. Then use ```db_filter.py``` to get the desired dataset to be analyzed. When all required files are in one folder, simply run \texttt{main.py} (You may have to adjust the file names in interface.py if the names don't match)! In our actual interface, the dropdown menu should be pretty intuitive, but for testing purposes, here are some fun examples to test on each function: 
+- **The average performance of a group of actors:**
+  - Robert Downey Jr., Tom Holland, Mark Ruffalo
+  - Rupert Grint, Emma Watson, Daniel Radcliffe
+  - Elijah Wood, Ian McKellen, Orlando Bloom
+- **the best performing movie by a group of actors:**
+  - Adrien Brody, Willem Dafoe, Bill Murray
+  - Christian Bale, Heath Ledger, Gary Oldman
+  - Brad Pitt, Edward Norton
+- **the castmates of a particular actor:**
+  - Morgan Freeman, 5, 2
+  - Robert De Niro, 3, 3
+  - Tom Hanks, 5, 3
+    
+# Discussion
+Overall, we would consider our project to be a success. We created an interactive way of finding correlations between actors, based on IMDb ratings. It's fun exploring who works best with whom, building imaginary casts and finding good movies based on your favorite actors. One issue we kept struggling with is finding the right scope of data. Movies with few reviews, adult films, and many other factors blurred the dataset and had to be dealt with first. For example, we noticed that getting rid of the minimum 100 review limit filled the graph with an estimated 80\% bollywood movies, many of which had only a handful reviews (which were all outstanding, and therefore prioritized). 
+
+A limitation to our program is that one has to know the precise spelling of an actors name, and that more niche actors get pushed back in a filtered dataset. One issue was also finding a balance between a meaningful dataset and a feasible size. If the dataset was too small, there were no correlations, too large and it would take egregious amounts of RAM and compute time. Another thing we thought about was limiting a time frame, since the IMDb database goes all the way back to the start of the 20. century, and actors and movies this early on don't really connect to modern actors/ movies in any meaningful way. 
+
+A next step would be incorporating tv series and short films as well, which isn't that big of a step, since it's only a question of filtering the dataset differently. Another idea would be grouping not just by collaborations, but by closely related movies or genres, which is a bit harder to do. We could also improve our interface with autocorrect, suggestions, etc., but that would take quite a while. Maybe swapping from tsv files to a rigid database structure would also improve the experience (since we could implement SQL query and such).
+
+In summary, we feel like we achieved our goal overall, and although there are a few limitations, these don't hold back the capabilities of our project very much.
+
 
 ## References:
-1. "IMDb Non-Commercial Datasets", IMDb Developer, (https://developer.imdb.com/non-commercial-datasets/)
-2. Makhija, Khushal, "Graph Visualization using Python( Matplotlib , Networkx )", (https://www.youtube.com/watch?v=Z-KWnn4\_\_BM)
-3. "Matplotlib 3.8.3 documentation", matplotlib,  (https://matplotlib.org/stable/index.html) 
-4. "Software for Complex Networks", NetworkX, (https://networkx.org/documentation/stable/)
-5. "Plotly Open Source Graphing Library for Python", Plotly Graphing Libraries, (https://plotly.com/python/)
+1. "IMDb Non-Commercial Datasets", IMDb Developer, https://developer.imdb.com/non-commercial-datasets/ 
+2. "PySimpleGUI", PySimpleGUI, https://www.pysimplegui.com/ 
+4. "Plotly Open Source Graphing Library for Python", Plotly Graphing Libraries, https://plotly.com/python/ 
+3. "Software for Complex Networks", NetworkX, https://networkx.org/documentation/stable/ 
